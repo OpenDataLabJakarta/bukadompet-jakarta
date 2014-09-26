@@ -2,53 +2,24 @@
 var COS = { 
   columns : [
     { 
-      name: "Description", 
+      name: "nama_skpd", 
       type: "string" 
     },
     { 
-      name: "Supplier", 
+      name: "nama_urusan", 
       type: "string" 
     },
     { 
-      name: "URL", 
+      name: "nama_program", 
       type: "string" 
     },
     { 
-      name: "Entity", 
-      type: "string" 
+      name: "nilai_anggaran", 
+      type: "number" 
     },
     { 
-      name: "Expense Type", 
-      type: "string" 
-    },
-    { 
-      name: "Transaction Number", 
-      type: "string" 
-    },
-    { 
-      name: "Amount", 
-      type: "number", 
-      // Define a helper for pre-processing numeric values - 
-      // ensures empty cells are set to 0 and the rest are 
-      // stripped of commas and turned to floats
-      before: function(v){
-        return (_.isUndefined(v) || _.isNull(v)) ? 
-          0 : 
-          parseFloat(v.replace(/\,/g, '')); 
-      } 
-    },
-    { 
-      name: "Expense Area", 
-      type: "string" 
-    },
-    { 
-      name: "Date", 
-      type: "time", 
-      format: "DD MMM YYYY" 
-    },
-    { 
-      name: "Departmental Family", 
-      type: "string" 
+      name: "nilai_spj", 
+      type: "number" 
     }
   ],
   
@@ -62,25 +33,20 @@ var COS = {
       "" : "index"
     },
 
-    index : function() {
-      
+    index : function() {  
       // configuration parameters that are used throughout the application:
       COS.config = {
-        // Define the start of the period we're interested in - 01 April 2010
-        startDate : moment("01-04-2010", "DD-MM-YYYY"),
-
-        // Define the end of the period we're interested in - 31 March 2011
-        finalDate : moment("31-03-2011", "DD-MM-YYYY"),
-
-        // Define a way to refer to all records within range
-        wholeRange : "2010 / 2011",
-
-        // default dates, all.
-        dateRanges : ["2010 / 2011"],
-
-        // Define which columns the data can be grouped by:
-        // "Expense Type","Expense Area","Supplier"
-        groupings : [COS.columns[4], COS.columns[7], COS.columns[1]],
+        // Define which columns the data can be grouped by
+        groupings : [
+          {
+            label: "Sektor Anggaran",
+            column: "nama_urusan"
+          },
+          {
+            label: "Besar Alokasi per SKPD",
+            column: "nama_skpd"
+          }
+        ],
 
         // Define the maximum number of groups to be included in the chart at any time
         maxGroups : 20,
@@ -91,63 +57,19 @@ var COS = {
           "#60C4B1", "#27C4F4", "#478DCB", "#3E67B1", "#4251A3", "#59449B", 
           "#6E3F7C", "#6A246D", "#8A4873", "#EB0080", "#EF58A0", "#C05A89"
          ]
-
       };
 
       // state management 
       COS.state = {
-        // Store the name of the currently selected month range
-        currentRange : COS.config.wholeRange,
-
-        // Store the name of the column by which the data is currently grouped:
-        // n.b. this is initially set as "Expense Type"
-        currentGrouping : COS.columns[4].name
+        // Store the name of the column by which the data is currently grouped.
+        currentGrouping : COS.config.groupings[0].column
       };
 
-      // Define the underlying dataset for this interactive, a CSV file containing 
-      // every item of Cabinet Office spending above �25k during the 2010/2011 period.
-      // (source = )
+      // Define the underlying dataset for this interactive treemap.
       COS.data = new Miso.Dataset({
-        
-        url: "data/cabinet_office_spend_data.csv",
+        url: "data/2013-apbd-jakarta.summary.csv",
         delimiter: ",",
-        columns: COS.columns,
-        
-        ready : function() {
-
-          // === add a range column to the data ====
-          var monthRangeValues = [],
-              month = moment(COS.config.startDate);
-
-          // iterate over each row and save the month and year
-          this.each(function(row){
-            monthRangeValues.push(row["Date"]);
-          });
-
-          monthRangeValues.sort(function(a,b) {
-            return a.valueOf() - b.valueOf();
-          });
-
-          monthRangeValues = _.map(monthRangeValues, function(row) {
-            return row.format("MMM YYYY")
-          });
-
-          console.log(monthRangeValues);
-          
-          // add a period column to the data.
-          this.addColumn({ 
-            name: "Period", 
-            type: "String", 
-            data: monthRangeValues 
-          });
-
-          // Calculate all possible month ranges in the required period, add an extra column
-          // to the data containing appropriate grouping values
-          COS.config.dateRanges = _.union(
-            COS.config.dateRanges, 
-            _.unique(this.column("Period").data)
-          );
-        }
+        columns: COS.columns
       });
 
       
@@ -158,7 +80,7 @@ var COS = {
         },
 
         error: function(){
-          COS.app.views.title.update("Failed to load data from " + data.url);
+          COS.app.views.title.update("Gagal memuat data dari lokasi " + data.url);
         }
       });
 
@@ -178,13 +100,10 @@ COS.Views.Main = Backbone.View.extend({
   render : function() {
     this.views.title = new COS.Views.Title();
     this.views.grouping = new COS.Views.Grouping();
-    this.views.dateranges = new COS.Views.DateRanges();
-
     this.views.treemap = new COS.Views.Treemap();
 
     this.views.title.render();
     this.views.grouping.render();
-    this.views.dateranges.render();
     this.views.treemap.render();
   } 
 });
@@ -194,7 +113,7 @@ COS.Views.Title = Backbone.View.extend({
   el : "#legend",
   initialize : function(options) {
     options = options || {};
-    this.defaultMessage = "Principle areas of Cabinet Office spending";
+    this.defaultMessage = "Anggaran Belanja and Penyerapan DKI Jakarta 2013";
     this.message = options.message || this.defaultMessage;
     this.setElement($(this.el));
   },
@@ -227,53 +146,20 @@ COS.Views.Grouping = Backbone.View.extend({
     options        = options || {};
     this.groupings = options.groupings || COS.config.groupings;
     this.template  = _.template($(this.template).html());
-
     this.setElement($(this.el));
   },
 
   render : function () {
     this.$el.parent().show();
     this.$el.html(this.template({ columns : this.groupings }));
+    console.log(this);
     return this;
   },
 
   // Whenever the dropdown option changes, re-render
   // the chart.
   onChange : function(e) {
-    
     COS.state.currentGrouping = $("option:selected", e.target).val();
-    COS.app.views.treemap.render();
-  }
-
-});
-
-/**
-* Date range dropdown containing all possiblev values.
-*/
-COS.Views.DateRanges = Backbone.View.extend({
-  
-  el : '#range', 
-  template : 'script#dateRanges',
-
-  events : {
-    "change" : "onChange"
-  },
-
-  initialize : function(options) {
-    options       = options || {};
-    this.ranges   = options.ranges || COS.config.dateRanges;
-    this.template = _.template($(this.template).html());
-    this.setElement($(this.el));  
-  },
-
-  render : function() {
-    this.$el.parent().show();
-    this.$el.html(this.template({ dateRanges : this.ranges }));
-    return this;
-  },
-
-  onChange : function(e) {
-    COS.state.currentRange = $("option:selected", e.target).val();
     COS.app.views.treemap.render();
   }
 
@@ -318,8 +204,7 @@ COS.Views.Treemap = Backbone.View.extend({
   render : function() {
 
     // load state
-    var range   = COS.state.currentRange,
-      grouping  = COS.state.currentGrouping,
+    var grouping  = COS.state.currentGrouping,
       maxGroups = COS.config.maxGroups;
 
     // Create a data subset that we are rendering
@@ -337,7 +222,7 @@ COS.Views.Treemap = Backbone.View.extend({
       }
       expenseData.elements.push({ 
         name:  row[grouping], 
-        total: row["Amount"], 
+        total: row["nilai_anggaran"], 
         color: COS.config.categoryColors[index % COS.config.categoryColors.length] 
       });
     });
@@ -389,7 +274,7 @@ COS.Views.Treemap = Backbone.View.extend({
             .style("top",        function(d){ return d.y + "px"; })
             .style("width",      function(d){ return d.dx - 1 + "px"; })
             .style("height",     function(d){ return d.dy - 1 + "px"; })
-          .style("background", function(d){ return d.color || "#F7F7F7"; });
+          .style("background", function(d){ return d.color || "#f7f7f7"; });
         })
 
         // on click just output some logging
@@ -428,18 +313,14 @@ COS.Views.Treemap = Backbone.View.extend({
           this.attr("class", "label")
               .style("font-size", function(d) {
                 return d.area > 55000 ? 
-                  "14px" : 
+                  "13px" : 
                   d.area > 20000 ? 
                     "12px" : 
                     d.area > 13000 ? 
                       "10px" : 
                       "0px"; 
               })
-              .style("text-transform", function(d) { 
-                return d.area > 20000 ? 
-                  "none" : 
-                  "uppercase"; 
-              });
+              .style("text-transform", "uppercase");
           })
 
           // append dollar amounts
@@ -466,9 +347,9 @@ COS.Utils = {
   // Format currency values for display using the required prefix and separator 
   toMoney : function(amount) {
     options = {
-      symbol : "&pound;",
-      decimal : ".",
-      thousand: ",",
+      symbol : "Rp",
+      decimal : ",",
+      thousand: ".",
       precision : 0
     };
     // we are using the accounting library
@@ -478,33 +359,17 @@ COS.Utils = {
   // Compute grouped data for a specific range, by the grouping.
   computeGroupedData : function() {
     // load state
-    var range   = COS.state.currentRange,
-      grouping  = COS.state.currentGrouping,
-      maxGroups = COS.config.maxGroups,
-      
-      // How are we selecting rows from the
-      rangeSelector = (range == COS.config.wholeRange) ? 
+    var grouping  = COS.state.currentGrouping,
+      maxGroups = COS.config.maxGroups;
 
-        // Define a function for selecting all rows in the range between startDate and finalDate
-        function(row){ 
-          return (row["Date"].valueOf() >= COS.config.startDate.valueOf()) 
-              && (row["Date"].valueOf() <= COS.config.finalDate.valueOf()); 
-        } : 
-        // select the period from a specific row
-        function(row){ 
-          return (row["Period"] === range) 
-        };
-
-    var groupedData = COS.data.rows(rangeSelector).groupBy(grouping, ["Amount"]);
-    
+    var groupedData = COS.data.rows('').groupBy(grouping, ["nilai_anggaran"]);
     groupedData.sort({
       comparator : function(a ,b){ 
-        if (b["Amount"] > a["Amount"]) { return  1; }
-        if (b["Amount"] < a["Amount"]) { return -1; }
-        if (b["Amount"] === a["Amount"]) { return 0; }
+        if (b["nilai_anggaran"] > a["nilai_anggaran"]) { return  1; }
+        if (b["nilai_anggaran"] < a["nilai_anggaran"]) { return -1; }
+        if (b["nilai_anggaran"] === a["nilai_anggaran"]) { return 0; }
       }      
     });
-
     return groupedData;
   }
 };

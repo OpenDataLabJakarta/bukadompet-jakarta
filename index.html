@@ -2,25 +2,18 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-        <title>Principal areas of Cabinet office spending 2010/2011</title>
+        <title>Anggaran Belanja and Penyerapan DKI Jakarta 2013</title>
         <link href="style/main.css" rel="stylesheet">
     </head>
     <body>
     	<div id=container>
 	        <div id="header">
 	            <div id="legend">
-	                Loading spending data
-	            </div>
-	            <div id="daterange">
-	                <label for="range">
-	                    in period:
-	                </label>
-	                <select name="id" id="range">
-	                </select>
+	                Memuat data anggaran...
 	            </div>
 	            <div id="grouping">
 	                <label for="groupby">
-	                    grouped by:
+	                    Tampilkan berdasarkan:
 	                </label>
 	                <select name="id" id="groupby">
 	                </select>
@@ -39,13 +32,7 @@
 
         <script type="text/template" id="grouping">
           <% _.each(columns, function(column) { %>
-            <option value="<%= column.name %>"><%= column.name %></option>
-          <% }); %>
-        </script>
-
-        <script type="text/template" id="dateRanges">
-          <% _.each(dateRanges, function(range) { %>
-            <option value="<%= range %>"><%= range %></option>
+            <option value="<%= column.column %>"><%= column.label %></option>
           <% }); %>
         </script>
     </body>

@@ -21,23 +21,19 @@ html, body {
 
 #legend {
   float: left;
-  font-size: 20px;
+  font-size: 24px;
   font-family: Georgia;
-}
-
-#daterange {
-  float: right;
-  display: none;
-  padding-left: 10px;
 }
 
 #grouping {
   float: right;
   display: none;
+  font-size: 14px;
   padding-left: 10px;
 }
 
 #chart {
+  padding-top: 10px;
   width: 980px;
 }
 
