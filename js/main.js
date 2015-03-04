@@ -67,7 +67,7 @@ var COS = {
 
       // Define the underlying dataset for this interactive treemap.
       COS.data = new Miso.Dataset({
-        url: "data/2013-apbd-jakarta.summary.csv",
+        url: "data/2015-rapbd-jakarta.summary.csv",
         delimiter: ",",
         columns: COS.columns
       });
@@ -113,7 +113,7 @@ COS.Views.Title = Backbone.View.extend({
   el : "#legend",
   initialize : function(options) {
     options = options || {};
-    this.defaultMessage = "Anggaran Belanja and Penyerapan DKI Jakarta 2013";
+    this.defaultMessage = "Rancangan Anggaran Belanja Pemprov DKI Jakarta 2015";
     this.message = options.message || this.defaultMessage;
     this.setElement($(this.el));
   },
